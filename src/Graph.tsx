@@ -13,8 +13,9 @@ interface IProps {
 /**
  * Perspective library adds load to HTMLElement prototype.
  * This interface acts as a wrapper for Typescript compiler.
+ * enable Perspective to behave like HTMLElement.
  */
-interface PerspectiveViewerElement {
+interface PerspectiveViewerElement extends HTMLElement{
   load: (table: Table) => void,
 }
 
@@ -32,7 +33,7 @@ class Graph extends Component<IProps, {}> {
 
   componentDidMount() {
     // Get element to attach the table from the DOM.
-    const elem: PerspectiveViewerElement = document.getElementsByTagName('perspective-viewer')[0] as unknown as PerspectiveViewerElement;
+    const elem = document.getElementsByTagName('perspective-viewer')[0] as unknown as PerspectiveViewerElement;
 
     const schema = {
       stock: 'string',
@@ -46,9 +47,21 @@ class Graph extends Component<IProps, {}> {
     }
     if (this.table) {
       // Load the `table` in the `<perspective-viewer>` DOM reference.
+      elem.load(this.table);
 
       // Add more Perspective configurations here.
-      elem.load(this.table);
+      elem.setAttribute('view', 'y_line');                // type of graph
+      elem.setAttribute('column-pivots', '["stock"]');    // distinguish between stocks
+      elem.setAttribute('row-pivots', '["timestamp"]');   // x-axis
+      elem.setAttribute('columns', '["top_ask_price"]');  // focus on top_ask_price
+
+      // Aggregates are used to calculate the values of the data to be plotted
+      // handles duplicated data, data point considered unique if has unique name and timestamp
+      elem.setAttribute('aggregates', `
+        {"stock": "distinct count",
+        "top_ask_price": "avg",
+        "top_bid_price": "avg",
+        "timestamp": "distinct count"}`);
     }
   }
 
